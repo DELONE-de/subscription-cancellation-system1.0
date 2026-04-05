@@ -5,6 +5,7 @@ import { DatabaseStack } from '../lib/stacks/database-stack';
 import { SchedulerStack } from '../lib/stacks/scheduler-stack';
 import { LambdaStack } from '../lib/stacks/lambda-stack';
 import { ApiStack } from '../lib/stacks/api-stack';
+import { ObservabilityStack } from '../lib/stacks/observability-stack';
 import { envConfig, currentEnv } from '../lib/config/env';
 import { PROJECT_NAME } from '../lib/config/constants';
 
@@ -34,9 +35,17 @@ const apiStack = new ApiStack(app, `${PROJECT_NAME}-api-${currentEnv}`, {
   cancelNowFn: lambdaStack.cancelNowLambda.lambdaFunction,
 });
 
+const observabilityStack = new ObservabilityStack(app, `${PROJECT_NAME}-observability-${currentEnv}`, {
+  env,
+  createSubscriptionFn: lambdaStack.createSubscriptionLambda.lambdaFunction,
+  cancelNowFn: lambdaStack.cancelNowLambda.lambdaFunction,
+  executeCancellationFn: lambdaStack.executeCancellationLambda.lambdaFunction,
+});
+
 lambdaStack.addDependency(dbStack);
 lambdaStack.addDependency(schedulerStack);
 apiStack.addDependency(lambdaStack);
+observabilityStack.addDependency(lambdaStack);
 
 Tags.of(app).add('Project', PROJECT_NAME);
 Tags.of(app).add('Environment', currentEnv);

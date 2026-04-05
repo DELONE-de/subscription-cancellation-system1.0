@@ -4,10 +4,11 @@ from datetime import datetime, timezone, timedelta
 
 from db import create_subscription, update_subscription
 from scheduler import create_schedule
-from utils import get_current_time_iso, validate_input, log
+from utils import get_current_time_iso, validate_input, log, init_context
 
 
 def lambda_handler(event: dict, context) -> dict:
+    init_context(context)
     try:
         body = json.loads(event.get("body") or "{}")
         validate_input(body, ["userId", "plan"])

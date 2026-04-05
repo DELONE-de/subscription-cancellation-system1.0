@@ -1,7 +1,7 @@
 import json
 
 from cancellation_service import cancel_subscription
-from utils import log
+from utils import log, init_context
 
 
 def lambda_handler(event: dict, context) -> dict:
@@ -9,6 +9,7 @@ def lambda_handler(event: dict, context) -> dict:
     Triggered by EventBridge Scheduler.
     The scheduler passes {"subscriptionId": "..."} as the target input.
     """
+    init_context(context)
     try:
         subscription_id = event.get("subscriptionId")
         if not subscription_id:

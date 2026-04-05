@@ -2,10 +2,11 @@ import json
 
 from cancellation_service import cancel_subscription
 from db import get_subscription
-from utils import log
+from utils import log, init_context
 
 
 def lambda_handler(event: dict, context) -> dict:
+    init_context(context)
     try:
         # subscriptionId from path parameter
         subscription_id = (event.get("pathParameters") or {}).get("subscriptionId")
