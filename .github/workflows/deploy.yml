@@ -7,6 +7,15 @@ on:
       - staging     # deploys to staging
       - dev         # deploys to dev
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - destroy
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -44,4 +53,9 @@ jobs:
         run: bash scripts/bootstrap.sh
 
       - name: Deploy
+        if: ${{ github.event.inputs.action != 'destroy' }}
         run: bash scripts/deploy.sh
+
+      - name: Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: bash scripts/destroy.sh
