@@ -1,33 +1,41 @@
 import json
 
 from cancellation_service import cancel_subscription
-from db import get_active_subscription_by_user_id
+from db import get_subscription
 from utils import log
 
 
 def lambda_handler(event: dict, context) -> dict:
     try:
-        # userId injected by API Gateway authorizer
-        user_id = (event.get("requestContext") or {}).get("authorizer", {}).get("userId")
-        if not user_id:
-            raise ValueError("Unauthorized: userId missing from request context")
+        # subscriptionId from path parameter
+        subscription_id = (event.get("pathParameters") or {}).get("subscriptionId")
+        if not subscription_id:
+            raise ValueError("subscriptionId path parameter is required")
 
-        log("INFO", "CancelNow invoked", userId=user_id)
+        # userId from authorizer context or request body
+        authorizer_user_id = (event.get("requestContext") or {}).get("authorizer", {}).get("userId")
+        body = json.loads(event.get("body") or "{}")
+        user_id = authorizer_user_id or body.get("userId")
 
-        subscription = get_active_subscription_by_user_id(user_id)
-        if not subscription:
-            return {"statusCode": 404, "body": json.dumps({"error": "No active subscription found"})}
+        log("INFO", "CancelNow invoked", subscriptionId=subscription_id)
 
-        subscription_id = subscription["subscriptionId"]
+        # Ownership check
+        if user_id:
+            subscription = get_subscription(subscription_id)
+            if not subscription:
+                return {"statusCode": 404, "body": json.dumps({"error": "Subscription not found"})}
+            if subscription.get("userId") != user_id:
+                return {"statusCode": 403, "body": json.dumps({"error": "Forbidden"})}
+
         result = cancel_subscription(subscription_id)
 
         if not result["success"]:
             return {"statusCode": 404, "body": json.dumps({"error": result["error"]})}
 
-        message = "already canceled" if result["alreadyCanceled"] else "canceled"
+        status = "canceled"
         return {
             "statusCode": 200,
-            "body": json.dumps({"status": message, "subscriptionId": subscription_id}),
+            "body": json.dumps({"subscriptionId": subscription_id, "status": status}),
         }
 
     except ValueError as e:

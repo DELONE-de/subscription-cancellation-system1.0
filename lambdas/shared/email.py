@@ -15,7 +15,8 @@ def send_cancellation_email(email: str, subscription_id: str) -> None:
             "Body": {
                 "Text": {
                     "Data": (
-                        f"Your subscription (ID: {subscription_id}) has been deleted.\n"
+                        f"Your subscription (ID: {subscription_id}) has been deletedt
+                        .\n"
                         "If you have questions, please contact support."
                     )
                 }
