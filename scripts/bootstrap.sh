@@ -11,11 +11,14 @@ npm ci
 echo "==> Building TypeScript"
 npm run build
 
-# Resolve account ID — fall back to STS if CDK_DEFAULT_ACCOUNT not set
-ACCOUNT_ID="${CDK_DEFAULT_ACCOUNT:-$(aws sts get-caller-identity --query Account --output text)}"
+# Resolve region — fall back to us-east-1
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 
-echo "==> Bootstrapping CDK environment (account: ${ACCOUNT_ID}, region: ${AWS_DEFAULT_REGION})"
-npx cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_DEFAULT_REGION}"
+# Resolve account ID — fall back to STS if CDK_DEFAULT_ACCOUNT not set
+ACCOUNT_ID="${CDK_DEFAULT_ACCOUNT:-$(aws sts get-caller-identity --query Account --output text --region "${REGION}")}"
+
+echo "==> Bootstrapping CDK environment (account: ${ACCOUNT_ID}, region: ${REGION})"
+npx cdk bootstrap "aws://${ACCOUNT_ID}/${REGION}"
 
 echo "==> Synthesizing CloudFormation templates"
 npx cdk synth
