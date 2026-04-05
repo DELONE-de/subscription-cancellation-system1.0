@@ -1,0 +1,47 @@
+name: Deploy Subscription Cancellation System
+
+on:
+  push:
+    branches:
+      - main        # deploys to prod
+      - staging     # deploys to staging
+      - dev         # deploys to dev
+  workflow_dispatch:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+  CDK_DEFAULT_ACCOUNT: ${{ vars.CDK_DEFAULT_ACCOUNT }}
+  SES_SENDER_EMAIL: ${{ vars.SES_SENDER_EMAIL }}
+
+jobs:
+  deploy:
+    name: Bootstrap & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set ENV from branch
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "ENV=prod" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "ENV=staging" >> $GITHUB_ENV
+          else
+            echo "ENV=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Bootstrap
+        run: bash scripts/bootstrap.sh
+
+      - name: Deploy
+        run: bash scripts/deploy.sh
